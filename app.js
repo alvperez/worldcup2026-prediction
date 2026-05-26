@@ -2110,7 +2110,10 @@ function scorePrediction(prediction, results = RESULTS) {
 
 // ---- Leaderboard ----
 
-async function loadLeaderboard() {
+let cachedSubmissions = null;
+let pickFrequencies = null;
+
+async function fetchAndCacheSubmissions() {
   const res = await fetch(LEADERBOARD_CSV_URL);
   const csv = await res.text();
 
@@ -2125,7 +2128,6 @@ async function loadLeaderboard() {
       const prediction = JSON.parse(rawJson);
       submissions.push({
         name: prediction.name || 'Anonymous',
-        score: scorePrediction(prediction),
         prediction
       });
     } catch (e) {
@@ -2133,8 +2135,270 @@ async function loadLeaderboard() {
     }
   });
 
-  submissions.sort((a, b) => b.score - a.score);
-  renderLeaderboardList(submissions);
+  submissions.forEach(s => { s.score = scorePrediction(s.prediction); });
+  pickFrequencies = computePickFrequencies(submissions);
+  submissions.forEach(s => {
+    s.originality = computeOriginalityFor(s.prediction, pickFrequencies);
+  });
+
+  cachedSubmissions = submissions;
+  return submissions;
+}
+
+async function ensureSubmissions() {
+  if (cachedSubmissions) return cachedSubmissions;
+  return fetchAndCacheSubmissions();
+}
+
+function computePickFrequencies(submissions) {
+  const total = submissions.length || 1;
+  const counts = {
+    champion: {},
+    runnerUp: {},
+    thirdPlace: {},
+    semifinalists: {},
+    groupRank: {},
+    goldenBoot: {},
+    goldenBall: {}
+  };
+
+  function bump(bucket, key) {
+    if (!key) return;
+    bucket[key] = (bucket[key] || 0) + 1;
+  }
+
+  submissions.forEach(s => {
+    const p = s.prediction;
+    bump(counts.champion, getChampionFromPayload(p));
+    bump(counts.runnerUp, getRunnerUpFromPayload(p));
+    bump(counts.thirdPlace, getThirdPlaceWinnerFromPayload(p));
+    getSemifinalistsFromPayload(p).forEach(team => bump(counts.semifinalists, team));
+    Object.keys(p.groups || {}).forEach(g => {
+      const order = p.groups[g] || [];
+      [0, 1, 2].forEach(i => {
+        if (order[i]) bump(counts.groupRank, `${g}:${i}:${order[i]}`);
+      });
+    });
+    (p.awards?.goldenBoot || []).forEach((player, i) => {
+      if (player) bump(counts.goldenBoot, `${i}:${player}`);
+    });
+    (p.awards?.goldenBall || []).forEach((player, i) => {
+      if (player) bump(counts.goldenBall, `${i}:${player}`);
+    });
+  });
+
+  function toFrac(bucket) {
+    const out = {};
+    Object.keys(bucket).forEach(k => { out[k] = bucket[k] / total; });
+    return out;
+  }
+
+  return {
+    total,
+    counts,
+    champion: toFrac(counts.champion),
+    runnerUp: toFrac(counts.runnerUp),
+    thirdPlace: toFrac(counts.thirdPlace),
+    semifinalists: toFrac(counts.semifinalists),
+    groupRank: toFrac(counts.groupRank),
+    goldenBoot: toFrac(counts.goldenBoot),
+    goldenBall: toFrac(counts.goldenBall)
+  };
+}
+
+function computeOriginalityFor(prediction, freq) {
+  if (!freq) return 0;
+  const samples = [];
+
+  const champ = getChampionFromPayload(prediction);
+  if (champ) samples.push(1 - (freq.champion[champ] || 0));
+
+  const ru = getRunnerUpFromPayload(prediction);
+  if (ru) samples.push(1 - (freq.runnerUp[ru] || 0));
+
+  const tp = getThirdPlaceWinnerFromPayload(prediction);
+  if (tp) samples.push(1 - (freq.thirdPlace[tp] || 0));
+
+  Object.keys(prediction.groups || {}).forEach(g => {
+    const order = prediction.groups[g] || [];
+    [0, 1, 2].forEach(i => {
+      if (order[i]) {
+        samples.push(1 - (freq.groupRank[`${g}:${i}:${order[i]}`] || 0));
+      }
+    });
+  });
+
+  (prediction.awards?.goldenBoot || []).forEach((player, i) => {
+    if (player) samples.push(1 - (freq.goldenBoot[`${i}:${player}`] || 0));
+  });
+  (prediction.awards?.goldenBall || []).forEach((player, i) => {
+    if (player) samples.push(1 - (freq.goldenBall[`${i}:${player}`] || 0));
+  });
+
+  if (samples.length === 0) return 0;
+  const avg = samples.reduce((a, b) => a + b, 0) / samples.length;
+  return Math.round(avg * 100);
+}
+
+async function loadLeaderboard() {
+  const submissions = await fetchAndCacheSubmissions();
+  const sorted = [...submissions].sort((a, b) => b.score - a.score);
+  renderLeaderboardList(sorted);
+}
+
+// ---- Consensus ----
+
+async function loadConsensus() {
+  const container = document.getElementById('consensusContent');
+  if (!container) return;
+  container.innerHTML = '<p class="note-text" style="margin-top:20px;">Cargando...</p>';
+
+  const submissions = await ensureSubmissions();
+  renderConsensus(submissions, pickFrequencies, container);
+}
+
+function tallyPicks(submissions, extractor) {
+  const counts = new Map();
+  let total = 0;
+  submissions.forEach(s => {
+    const value = extractor(s.prediction, s);
+    if (value === null || value === undefined || value === '') return;
+    total += 1;
+    if (Array.isArray(value)) {
+      value.forEach(v => {
+        if (!v) return;
+        counts.set(v, (counts.get(v) || 0) + 1);
+      });
+    } else {
+      counts.set(value, (counts.get(value) || 0) + 1);
+    }
+  });
+  const denominator = submissions.length || 1;
+  return Array.from(counts.entries())
+    .map(([value, count]) => ({ value, count, pct: count / denominator }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function consensusBarRow(label, count, pct, sampleSize) {
+  const pctText = `${Math.round(pct * 100)}%`;
+  const widthPct = Math.max(2, Math.round(pct * 100));
+  return `
+    <div class="consensus-row">
+      <div class="consensus-row-bar" style="width:${widthPct}%"></div>
+      <div class="consensus-row-content">
+        <span class="consensus-row-label">${escapeHtml(label)}</span>
+        <span class="consensus-row-stats">
+          <span class="consensus-row-count">${count}/${sampleSize}</span>
+          <span class="consensus-row-pct">${pctText}</span>
+        </span>
+      </div>
+    </div>
+  `;
+}
+
+function consensusSection(title, subtitle, rows, sampleSize, opts = {}) {
+  const limit = opts.limit || rows.length;
+  const visible = rows.slice(0, limit);
+  if (visible.length === 0) {
+    return `
+      <section class="consensus-card">
+        <h3 class="consensus-card-title">${escapeHtml(title)}</h3>
+        ${subtitle ? `<p class="consensus-card-sub">${escapeHtml(subtitle)}</p>` : ''}
+        <p class="note-text">Nadie ha apostado aún a esto.</p>
+      </section>
+    `;
+  }
+  const rowsHtml = visible.map(r => consensusBarRow(r.value, r.count, r.pct, sampleSize)).join('');
+  const restNote = rows.length > limit
+    ? `<p class="consensus-card-foot">+${rows.length - limit} más con un solo voto</p>`
+    : '';
+  return `
+    <section class="consensus-card">
+      <h3 class="consensus-card-title">${escapeHtml(title)}</h3>
+      ${subtitle ? `<p class="consensus-card-sub">${escapeHtml(subtitle)}</p>` : ''}
+      <div class="consensus-rows">${rowsHtml}</div>
+      ${restNote}
+    </section>
+  `;
+}
+
+function renderConsensus(submissions, freq, container) {
+  if (!submissions || submissions.length === 0) {
+    container.innerHTML = '<p class="note-text" style="margin-top:20px;">Todavía no hay predicciones que analizar.</p>';
+    return;
+  }
+
+  const total = submissions.length;
+
+  const champion = tallyPicks(submissions, p => getChampionFromPayload(p));
+  const runnerUp = tallyPicks(submissions, p => getRunnerUpFromPayload(p));
+  const thirdPlace = tallyPicks(submissions, p => getThirdPlaceWinnerFromPayload(p));
+  const finalists = tallyPicks(submissions, p => {
+    const pair = getFinalistsFromPayload(p);
+    if (!pair || pair.length < 2 || !pair[0] || !pair[1]) return null;
+    return [pair[0], pair[1]].sort().join(' + ');
+  });
+  const semifinalists = tallyPicks(submissions, p => getSemifinalistsFromPayload(p));
+  const goldenBoot = tallyPicks(submissions, p => p.awards?.goldenBoot?.[0] || null);
+  const goldenBall = tallyPicks(submissions, p => p.awards?.goldenBall?.[0] || null);
+
+  const wildcards = champion.filter(r => r.count === 1).map(r => r.value);
+
+  const groupSections = (GROUP_NAMES.length ? GROUP_NAMES : Object.keys(submissions[0]?.prediction?.groups || {}))
+    .sort()
+    .map(groupLetter => {
+      const winners = tallyPicks(submissions, p => p.groups?.[groupLetter]?.[0] || null);
+      if (winners.length === 0) return '';
+      return consensusSection(
+        `Ganador grupo ${groupLetter}`,
+        '',
+        winners,
+        total,
+        { limit: 6 }
+      );
+    })
+    .filter(Boolean)
+    .join('');
+
+  const wildcardCard = wildcards.length > 0
+    ? `
+      <section class="consensus-card consensus-wildcards">
+        <h3 class="consensus-card-title">🃏 El club de los visionarios</h3>
+        <p class="consensus-card-sub">Campeones que solo ha apostado una persona:</p>
+        <div class="consensus-wildcard-list">
+          ${wildcards.map(w => `<span class="consensus-wildcard-chip">${escapeHtml(w)}</span>`).join('')}
+        </div>
+      </section>
+    `
+    : '';
+
+  container.innerHTML = `
+    <div class="consensus-grid">
+      <section class="consensus-card consensus-summary">
+        <h3 class="consensus-card-title">📨 ${total} predicciones recibidas</h3>
+        <p class="consensus-card-sub">
+          Campeones únicos: <strong>${champion.length}</strong> ·
+          Pares de finalistas únicos: <strong>${finalists.length}</strong>
+        </p>
+      </section>
+
+      ${consensusSection('🏆 Campeón', 'A quién has apostado todo el mundo:', champion, total, { limit: 10 })}
+      ${consensusSection('🥈 Subcampeón', '', runnerUp, total, { limit: 10 })}
+      ${consensusSection('🥉 Tercer puesto', '', thirdPlace, total, { limit: 10 })}
+      ${consensusSection('🎯 Pareja de finalistas', 'Las dos selecciones que se enfrentarían en la final:', finalists, total, { limit: 10 })}
+      ${consensusSection('🎽 Semifinalistas', 'Equipos más apostados para llegar a semis (1 voto = 1 sitio):', semifinalists, total, { limit: 8 })}
+      ${consensusSection('⚽ Bota de Oro (1ª)', '', goldenBoot, total, { limit: 8 })}
+      ${consensusSection('🏅 Balón de Oro (1º)', '', goldenBall, total, { limit: 8 })}
+      ${wildcardCard}
+
+      <section class="consensus-card consensus-groups">
+        <h3 class="consensus-card-title">🌍 Ganadores de grupo</h3>
+        <div class="consensus-groups-grid">
+          ${groupSections}
+        </div>
+      </section>
+    </div>
+  `;
 }
 
 function parseCSV(csv) {
@@ -2190,10 +2454,15 @@ function renderLeaderboardList(submissions) {
     btn.type = 'button';
     btn.className = 'leaderboard-entry';
 
+    const originality = entry.originality ?? 0;
+
     btn.innerHTML = `
       <span class="leaderboard-rank">#${index + 1}</span>
-      <span class="leaderboard-name">${entry.name}</span>
-      <span class="leaderboard-score">${entry.score} pts</span>
+      <span class="leaderboard-name">${escapeHtml(entry.name)}</span>
+      <span class="leaderboard-badges">
+        <span class="leaderboard-score">${entry.score} pts</span>
+        <span class="leaderboard-originality" title="Qué tan original es esta predicción comparada con el resto">${originality}% original</span>
+      </span>
     `;
 
     btn.addEventListener('click', () => {
@@ -2288,25 +2557,286 @@ function openScoringHelpModal() {
 
 function renderPredictionReview(entry) {
   const viewer = document.getElementById('predictionViewer');
+  const originality = (entry.originality ?? 0);
 
   viewer.innerHTML = `
     <div class="prediction-review">
-      <h3>La predicción de ${entry.name} — ${entry.score} pts</h3>
+      <div class="prediction-review-header">
+        <div class="prediction-review-titleblock">
+          <h3 class="prediction-review-name">${escapeHtml(entry.name)}</h3>
+          <div class="prediction-review-badges">
+            <span class="prediction-review-score">${entry.score} pts</span>
+            <span class="prediction-review-originality" title="Qué tan original es esta predicción comparada con el resto">${originality}% original</span>
+          </div>
+        </div>
+        <div class="prediction-review-actions" id="predictionReviewActions"></div>
+      </div>
+      <div class="prediction-review-body">
+        <h4>Fase de grupos</h4>
+        <div class="review-groups" id="reviewGroups"></div>
 
-      <h4>Fase de grupos</h4>
-      <div class="review-groups" id="reviewGroups"></div>
+        <h4>Logros individuales</h4>
+        <div class="review-section" id="reviewAwards"></div>
 
-      <h4>Knockout</h4>
-      <div class="review-section" id="reviewKnockout"></div>
-
-      <h4>Logros individuales</h4>
-      <div class="review-section" id="reviewAwards"></div>
+        <h4>Knockout</h4>
+        <div class="review-section" id="reviewKnockout"></div>
+      </div>
     </div>
   `;
 
   renderReviewGroups(entry.prediction, entry);
-  renderReviewKnockout(entry.prediction);
   renderReviewAwards(entry.prediction);
+  renderReviewKnockout(entry.prediction);
+  renderPredictionReviewActions(entry);
+}
+
+function renderPredictionReviewActions(entry) {
+  const slot = document.getElementById('predictionReviewActions');
+  if (!slot) return;
+  slot.innerHTML = '';
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'prediction-compare-btn';
+  btn.textContent = 'Comparar con...';
+  btn.addEventListener('click', () => openComparePicker(entry));
+  slot.appendChild(btn);
+}
+
+function openComparePicker(entry) {
+  showComparePicker(entry);
+}
+
+function showComparePicker(entryA) {
+  if (!cachedSubmissions || cachedSubmissions.length < 2) {
+    showToast('Aún no hay con quién comparar.', true);
+    return;
+  }
+
+  const existing = document.getElementById('comparePicker');
+  if (existing) existing.remove();
+
+  const others = cachedSubmissions
+    .filter(s => s !== entryA && s.name !== entryA.name)
+    .slice()
+    .sort((a, b) => b.score - a.score);
+
+  if (others.length === 0) {
+    showToast('No hay otro jugador para comparar.', true);
+    return;
+  }
+
+  const picker = document.createElement('div');
+  picker.id = 'comparePicker';
+  picker.className = 'compare-picker';
+  picker.innerHTML = `
+    <div class="compare-picker-panel">
+      <div class="compare-picker-head">
+        <span>Comparar ${escapeHtml(entryA.name)} con:</span>
+        <button type="button" class="compare-picker-close" aria-label="Cerrar">×</button>
+      </div>
+      <input type="text" class="compare-picker-search" placeholder="Buscar nombre..." autocomplete="off">
+      <div class="compare-picker-list"></div>
+    </div>
+  `;
+
+  document.body.appendChild(picker);
+
+  const list = picker.querySelector('.compare-picker-list');
+  const search = picker.querySelector('.compare-picker-search');
+
+  function renderList(filter = '') {
+    const term = filter.trim().toLowerCase();
+    list.innerHTML = '';
+    others
+      .filter(s => !term || s.name.toLowerCase().includes(term))
+      .forEach(s => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'compare-picker-item';
+        item.innerHTML = `
+          <span class="compare-picker-name">${escapeHtml(s.name)}</span>
+          <span class="compare-picker-score">${s.score} pts</span>
+        `;
+        item.addEventListener('click', () => {
+          picker.remove();
+          enterCompareMode(entryA, s);
+        });
+        list.appendChild(item);
+      });
+  }
+
+  renderList();
+
+  search.addEventListener('input', e => renderList(e.target.value));
+
+  picker.querySelector('.compare-picker-close').addEventListener('click', () => picker.remove());
+  picker.addEventListener('click', e => {
+    if (e.target === picker) picker.remove();
+  });
+
+  setTimeout(() => search.focus(), 50);
+}
+
+function enterCompareMode(entryA, entryB) {
+  const viewer = document.getElementById('predictionViewer');
+  viewer.innerHTML = `
+    <div class="prediction-review prediction-compare">
+      <div class="prediction-review-header">
+        <div class="prediction-review-titleblock">
+          <h3 class="prediction-review-name">${escapeHtml(entryA.name)} <span class="compare-vs">vs</span> ${escapeHtml(entryB.name)}</h3>
+          <div class="prediction-review-badges">
+            <span class="prediction-review-score">A: ${entryA.score} pts</span>
+            <span class="prediction-review-score" style="background:#5a3aa1">B: ${entryB.score} pts</span>
+            <span class="prediction-review-originality">A: ${entryA.originality ?? 0}% · B: ${entryB.originality ?? 0}%</span>
+          </div>
+        </div>
+        <div class="prediction-review-actions">
+          <button type="button" class="prediction-compare-btn" id="exitCompareBtn">← Volver</button>
+        </div>
+      </div>
+      <div class="prediction-review-body">
+        <h4>Fase de grupos</h4>
+        <div class="compare-groups" id="compareGroups"></div>
+
+        <h4>Logros individuales</h4>
+        <div class="compare-awards" id="compareAwards"></div>
+
+        <h4>Knockout</h4>
+        <div class="compare-knockouts" id="compareKnockouts"></div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('exitCompareBtn').addEventListener('click', () => {
+    openPredictionModal(entryA);
+  });
+
+  renderCompareGroups(entryA, entryB);
+  renderCompareAwards(entryA, entryB);
+  renderCompareKnockouts(entryA, entryB);
+}
+
+function renderCompareGroups(entryA, entryB) {
+  const container = document.getElementById('compareGroups');
+  const groups = GROUP_NAMES.length ? GROUP_NAMES : Object.keys(entryA.prediction.groups || {}).sort();
+
+  container.innerHTML = groups.map(g => {
+    const orderA = entryA.prediction.groups?.[g] || [];
+    const orderB = entryB.prediction.groups?.[g] || [];
+    const rows = [0, 1, 2, 3].map(idx => {
+      const teamA = orderA[idx] || '---';
+      const teamB = orderB[idx] || '---';
+      const diff = teamA !== teamB ? ' compare-diff' : '';
+      return `
+        <div class="compare-group-row${diff}">
+          <span class="compare-group-pos">${idx + 1}º</span>
+          <span class="compare-group-team"><span class="slot-flag ${getFlagClass(teamA)}"></span>${escapeHtml(teamA)}</span>
+          <span class="compare-group-team"><span class="slot-flag ${getFlagClass(teamB)}"></span>${escapeHtml(teamB)}</span>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="compare-group-card">
+        <div class="compare-group-head">
+          <span>Grupo ${g}</span>
+          <span class="compare-group-headers">
+            <span>${escapeHtml(entryA.name)}</span>
+            <span>${escapeHtml(entryB.name)}</span>
+          </span>
+        </div>
+        ${rows}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCompareAwards(entryA, entryB) {
+  const container = document.getElementById('compareAwards');
+
+  const labels = [
+    ['Bota de oro', 'goldenBoot', 0],
+    ['Bota de plata', 'goldenBoot', 1],
+    ['Bota de bronce', 'goldenBoot', 2],
+    ['Balón de oro', 'goldenBall', 0],
+    ['Balón de plata', 'goldenBall', 1],
+    ['Balón de bronce', 'goldenBall', 2]
+  ];
+
+  const rows = labels.map(([label, key, idx]) => {
+    const a = entryA.prediction.awards?.[key]?.[idx] || '---';
+    const b = entryB.prediction.awards?.[key]?.[idx] || '---';
+    const diff = a !== b ? ' compare-diff' : '';
+    return `
+      <div class="compare-award-row${diff}">
+        <span class="compare-award-label">${escapeHtml(label)}</span>
+        <span class="compare-award-pick">${escapeHtml(a)}</span>
+        <span class="compare-award-pick">${escapeHtml(b)}</span>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="compare-awards-table">
+      <div class="compare-award-row compare-awards-head">
+        <span class="compare-award-label"></span>
+        <span class="compare-award-pick">${escapeHtml(entryA.name)}</span>
+        <span class="compare-award-pick">${escapeHtml(entryB.name)}</span>
+      </div>
+      ${rows}
+    </div>
+  `;
+}
+
+function renderCompareKnockouts(entryA, entryB) {
+  const container = document.getElementById('compareKnockouts');
+
+  const stateA = buildKnockoutReviewState(entryA.prediction);
+  const stateB = buildKnockoutReviewState(entryB.prediction);
+
+  function buildPane(name, reviewState) {
+    const pane = document.createElement('div');
+    pane.className = 'bracket-wrapper review-knockout-pane compare-knockout-pane';
+
+    const label = document.createElement('div');
+    label.className = 'compare-knockout-label';
+    label.textContent = name;
+    pane.appendChild(label);
+
+    const bracket = renderKnockoutBracket(reviewState, '', {
+      extraClass: 'review-knockout-predicted compare-knockout-bracket'
+    });
+    pane.appendChild(bracket);
+    return pane;
+  }
+
+  const paneA = buildPane(entryA.name, stateA);
+  const paneB = buildPane(entryB.name, stateB);
+
+  container.appendChild(paneA);
+  container.appendChild(paneB);
+
+  // Post-process: mark slots that disagree on winner.
+  const allMatchNums = new Set([
+    ...Object.keys(stateA.knockoutResults || {}),
+    ...Object.keys(stateB.knockoutResults || {})
+  ]);
+
+  const esc = window.CSS && CSS.escape ? CSS.escape : s => String(s).replace(/(["\\\]])/g, '\\$1');
+
+  allMatchNums.forEach(numStr => {
+    const num = Number(numStr);
+    const winnerA = stateA.knockoutResults?.[num];
+    const winnerB = stateB.knockoutResults?.[num];
+    if (!winnerA || !winnerB) return;
+    if (winnerA === winnerB) return;
+
+    const slotA = paneA.querySelector(`.bracket-slot[data-match-num="${num}"][data-team="${esc(winnerA)}"]`);
+    const slotB = paneB.querySelector(`.bracket-slot[data-match-num="${num}"][data-team="${esc(winnerB)}"]`);
+    if (slotA) slotA.classList.add('compare-diff-slot');
+    if (slotB) slotB.classList.add('compare-diff-slot');
+  });
 }
 
 function escapeHtml(value) {
@@ -2976,8 +3506,10 @@ function renderKnockoutBracket(reviewState, titleText, options = {}) {
       '<span class="slot-name">' + escapeHtml(team || '---') + '</span>' +
       (isClickable ? '<span class="review-match-info-dot" title="Ver partido real">i</span>' : '');
 
+    d.setAttribute('data-match-num', String(matchNum));
+    if (hasTeam) d.setAttribute('data-team', team);
+
     if (isClickable) {
-      d.setAttribute('data-match-num', String(matchNum));
       d.addEventListener('click', (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
@@ -3342,12 +3874,21 @@ async function init() {
     localStorage.setItem(LOCAL_STORAGE_VERSION_KEY, LOCAL_STORAGE_VERSION);
   }
 
+  let consensusLoaded = false;
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+
+      if (btn.dataset.tab === 'consensus' && !consensusLoaded) {
+        consensusLoaded = true;
+        loadConsensus().catch(err => {
+          consensusLoaded = false;
+          console.error('Failed to load consensus:', err);
+        });
+      }
     });
   });
 
