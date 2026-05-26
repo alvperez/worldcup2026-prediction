@@ -3887,6 +3887,11 @@ async function init() {
         loadConsensus().catch(err => {
           consensusLoaded = false;
           console.error('Failed to load consensus:', err);
+          const container = document.getElementById('consensusContent');
+          if (container) {
+            container.innerHTML = '<p class="note-text" style="margin-top:20px;">No se pudo cargar el consenso. Recarga la página e inténtalo otra vez.</p>';
+          }
+          showToast('Error cargando el consenso.', true);
         });
       }
     });
