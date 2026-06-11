@@ -11,6 +11,9 @@ const FORM_ID = '1FAIpQLSeASQQL4Uicp790_f_ZHskxkuTn68FaLJ9N-KPWdvsc76D1Uw';
 const ENTRY_ID = 'entry.1687597452';
 // REPITO, POR FAVOR
 
+// Pon en true para cerrar las predicciones (el torneo ya ha empezado).
+const SUBMISSIONS_CLOSED = true;
+
 // Puedes cambiar los valores por tus propias puntuaciones si quieres
 const puntuaciones = {
   grupos: {
@@ -3769,6 +3772,10 @@ function parseCSV(text) {
 const FORM_ACTION = 'https://docs.google.com/forms/d/e/'+FORM_ID+'/formResponse';
 
 function submitPrediction() {
+  if (SUBMISSIONS_CLOSED) {
+    showToast('Las predicciones están cerradas. El torneo ya ha comenzado.', true);
+    return;
+  }
   openNameModal();
 }
 
@@ -3786,6 +3793,12 @@ function closeNameModal() {
 }
 
 async function confirmSubmitPrediction() {
+  if (SUBMISSIONS_CLOSED) {
+    closeNameModal();
+    showToast('Las predicciones están cerradas. El torneo ya ha comenzado.', true);
+    return;
+  }
+
   const input = document.getElementById('playerNameInput');
   const playerName = input.value.trim();
 
@@ -3906,7 +3919,13 @@ async function init() {
   if (btnScoringHelp) {
     btnScoringHelp.addEventListener('click', openScoringHelpModal);
   }
-  document.getElementById('btnSubmit').addEventListener('click', submitPrediction);
+  const btnSubmit = document.getElementById('btnSubmit');
+  btnSubmit.addEventListener('click', submitPrediction);
+  if (SUBMISSIONS_CLOSED) {
+    btnSubmit.disabled = true;
+    btnSubmit.classList.add('is-disabled');
+    btnSubmit.innerHTML = '&#128274; Predicciones cerradas';
+  }
   document.getElementById('confirmNameSubmit').addEventListener('click', confirmSubmitPrediction);
   document.getElementById('cancelNameSubmit').addEventListener('click', closeNameModal);
   document.getElementById('playerNameInput').addEventListener('keydown', e => {
