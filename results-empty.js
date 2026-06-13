@@ -8,6 +8,9 @@ const RESULTS = {
     },
     B: {
       "Canada__Bosnia & Herzegovina": { home: 1, away: 1 }
+    },
+    D: {
+      "Paraguay__USA": { home: 1, away: 4 }
     }
   },
 

@@ -34,7 +34,7 @@ The form has exactly one field; the entire prediction payload is `JSON.stringify
 
 - `index.html` — two tabs (`#tab-predict`, `#tab-leaderboard`), modals for group results, prediction viewer, name entry, scoring help, and toast/confetti containers.
 - `app.js` (~3.4k lines) — everything: data load, state, rendering, scoring, submission, leaderboard. Sections are loosely delimited by `// ---- … ----` banners.
-- `results.js` — defines global `RESULTS` (real tournament outcomes used to score every submission). `results-empty.js` is the pre-tournament template; only one of the two is loaded at a time via `index.html`.
+- `results.js` — defines global `RESULTS` (real tournament outcomes used to score every submission). `results-empty.js` is the pre-tournament template; only one of the two is loaded at a time via `index.html`. **`results-empty.js` is the file currently loaded by `index.html`** and is being filled in live as the real tournament progresses — add new match results there, not in `results.js`.
 - `third_place_table.js` — FIFA's official lookup table mapping the alphabetical 8-letter combination of qualifying group-3rd-place teams (`TP_TABLE` keyed by e.g. `"ABCDEFGH"`) to the 8 round-of-32 best-thirds slot assignments (`TP_COLUMNS = [79,85,81,74,82,77,87,80]`).
 
 ### Data flow
