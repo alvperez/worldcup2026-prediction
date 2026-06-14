@@ -20,6 +20,9 @@ const RESULTS = {
     },
     E: {
       "Curaçao__Germany": { home: 7, away: 1 }
+    },
+    F: {
+      "Japan__Netherlands": { home: 2, away: 2 }
     }
   },
 
