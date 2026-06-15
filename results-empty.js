@@ -25,6 +25,9 @@ const RESULTS = {
     F: {
       "Japan__Netherlands": { home: 2, away: 2 },
       "Sweden__Tunisia": { home: 5, away: 1 }
+    },
+    G: {
+      "Cape Verde__Spain": { home: 0, away: 0 }
     }
   },
 
