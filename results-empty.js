@@ -19,10 +19,12 @@ const RESULTS = {
       "Australia__Turkey": { home: 2, away: 0 }
     },
     E: {
-      "Curaçao__Germany": { home: 7, away: 1 }
+      "Curaçao__Germany": { home: 7, away: 1 },
+      "Ecuador__Ivory Coast": { home: 1, away: 0 }
     },
     F: {
-      "Japan__Netherlands": { home: 2, away: 2 }
+      "Japan__Netherlands": { home: 2, away: 2 },
+      "Sweden__Tunisia": { home: 5, away: 1 }
     }
   },
 
