@@ -27,7 +27,12 @@ const RESULTS = {
       "Sweden__Tunisia": { home: 5, away: 1 }
     },
     G: {
-      "Cape Verde__Spain": { home: 0, away: 0 }
+      "Belgium__Egypt": { home: 1, away: 1 },
+      "Iran__New Zealand": { home: 2, away: 2 }
+    },
+    H: {
+      "Cape Verde__Spain": { home: 0, away: 0 },
+      "Saudi Arabia__Uruguay": { home: 1, away: 1 }
     }
   },
 
