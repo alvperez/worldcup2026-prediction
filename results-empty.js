@@ -33,6 +33,13 @@ const RESULTS = {
     H: {
       "Cape Verde__Spain": { home: 0, away: 0 },
       "Saudi Arabia__Uruguay": { home: 1, away: 1 }
+    },
+    I: {
+      "France__Senegal": { home: 3, away: 1 },
+      "Iraq__Norway": { home: 1, away: 4 }
+    },
+    J: {
+      "Algeria__Argentina": { home: 3, away: 0 }
     }
   },
 
