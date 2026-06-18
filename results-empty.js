@@ -40,6 +40,13 @@ const RESULTS = {
     },
     J: {
       "Algeria__Argentina": { home: 3, away: 0 }
+    },
+    K: {
+      "DR Congo__Portugal": { home: 1, away: 1 }
+    },
+    L: {
+      "Croatia__England": { home: 4, away: 2 },
+      "Ghana__Panama": { home: 1, away: 0 }
     }
   },
 
