@@ -42,10 +42,12 @@ const RESULTS = {
       "Iraq__Norway": { home: 1, away: 4 }
     },
     J: {
-      "Algeria__Argentina": { home: 3, away: 0 }
+      "Algeria__Argentina": { home: 3, away: 0 },
+      "Austria__Jordan": { home: 3, away: 1 }
     },
     K: {
-      "DR Congo__Portugal": { home: 1, away: 1 }
+      "DR Congo__Portugal": { home: 1, away: 1 },
+      "Colombia__Uzbekistan": { home: 1, away: 3 }
     },
     L: {
       "Croatia__England": { home: 4, away: 2 },
