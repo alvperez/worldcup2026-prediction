@@ -51,19 +51,27 @@ const RESULTS = {
     },
     I: {
       "France__Senegal": { home: 3, away: 1 },
-      "Iraq__Norway": { home: 1, away: 4 }
+      "Iraq__Norway": { home: 1, away: 4 },
+      "France__Iraq": { home: 3, away: 0 },
+      "Norway__Senegal": { home: 3, away: 2 }
     },
     J: {
       "Algeria__Argentina": { home: 3, away: 0 },
-      "Austria__Jordan": { home: 3, away: 1 }
+      "Austria__Jordan": { home: 3, away: 1 },
+      "Argentina__Austria": { home: 2, away: 0 },
+      "Algeria__Jordan": { home: 1, away: 2 }
     },
     K: {
       "DR Congo__Portugal": { home: 1, away: 1 },
-      "Colombia__Uzbekistan": { home: 1, away: 3 }
+      "Colombia__Uzbekistan": { home: 1, away: 3 },
+      "Portugal__Uzbekistan": { home: 5, away: 0 },
+      "Colombia__DR Congo": { home: 1, away: 0 }
     },
     L: {
       "Croatia__England": { home: 4, away: 2 },
-      "Ghana__Panama": { home: 1, away: 0 }
+      "Ghana__Panama": { home: 1, away: 0 },
+      "England__Ghana": { home: 0, away: 0 },
+      "Croatia__Panama": { home: 0, away: 1 }
     }
   },
 
