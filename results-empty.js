@@ -3,7 +3,7 @@ const RESULTS = {
     A: ["Mexico", "South Africa", "South Korea", "Czech Republic"],
     B: ["Switzerland", "Canada", "Bosnia & Herzegovina", "Qatar"],
     C: ["Brazil", "Morocco", "Scotland", "Haiti"],
-    E: ["Ecuador", "Curaçao", "Ivory Coast", "Germany"]
+    E: ["Germany", "Ivory Coast", "Ecuador", "Curaçao"]
   },
   thirdPlace: [],
   groupMatches: {
