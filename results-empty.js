@@ -2,7 +2,8 @@ const RESULTS = {
   groups: {
     A: ["Mexico", "South Africa", "South Korea", "Czech Republic"],
     B: ["Switzerland", "Canada", "Bosnia & Herzegovina", "Qatar"],
-    C: ["Brazil", "Morocco", "Scotland", "Haiti"]
+    C: ["Brazil", "Morocco", "Scotland", "Haiti"],
+    E: ["Ecuador", "Curaçao", "Ivory Coast", "Germany"]
   },
   thirdPlace: [],
   groupMatches: {
@@ -40,7 +41,9 @@ const RESULTS = {
       "Curaçao__Germany": { home: 7, away: 1 },
       "Ecuador__Ivory Coast": { home: 1, away: 0 },
       "Germany__Ivory Coast": { home: 2, away: 1 },
-      "Curaçao__Ecuador": { home: 0, away: 0 }
+      "Curaçao__Ecuador": { home: 0, away: 0 },
+      "Curaçao__Ivory Coast": { home: 0, away: 2 },
+      "Ecuador__Germany": { home: 2, away: 1 }
     },
     F: {
       "Japan__Netherlands": { home: 2, away: 2 },
