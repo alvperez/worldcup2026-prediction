@@ -3,7 +3,11 @@ const RESULTS = {
     A: ["Mexico", "South Africa", "South Korea", "Czech Republic"],
     B: ["Switzerland", "Canada", "Bosnia & Herzegovina", "Qatar"],
     C: ["Brazil", "Morocco", "Scotland", "Haiti"],
-    E: ["Germany", "Ivory Coast", "Ecuador", "Curaçao"]
+    D: ["USA", "Australia", "Paraguay", "Turkey"],
+    E: ["Germany", "Ivory Coast", "Ecuador", "Curaçao"],
+    F: ["Netherlands", "Japan", "Sweden", "Tunisia"],
+    H: ["Spain", "Cape Verde", "Uruguay", "Saudi Arabia"],
+    I: ["France", "Norway", "Senegal", "Iraq"]
   },
   thirdPlace: [],
   groupMatches: {
@@ -35,7 +39,9 @@ const RESULTS = {
       "Paraguay__USA": { home: 4, away: 1 },
       "Australia__Turkey": { home: 2, away: 0 },
       "Australia__USA": { home: 2, away: 0 },
-      "Paraguay__Turkey": { home: 0, away: 1 }
+      "Paraguay__Turkey": { home: 0, away: 1 },
+      "Australia__Paraguay": { home: 0, away: 0 },
+      "Turkey__USA": { home: 3, away: 2 }
     },
     E: {
       "Curaçao__Germany": { home: 7, away: 1 },
@@ -49,7 +55,9 @@ const RESULTS = {
       "Japan__Netherlands": { home: 2, away: 2 },
       "Sweden__Tunisia": { home: 5, away: 1 },
       "Netherlands__Sweden": { home: 5, away: 1 },
-      "Japan__Tunisia": { home: 0, away: 4 }
+      "Japan__Tunisia": { home: 0, away: 4 },
+      "Japan__Sweden": { home: 1, away: 1 },
+      "Netherlands__Tunisia": { home: 1, away: 3 }
     },
     G: {
       "Belgium__Egypt": { home: 1, away: 1 },
@@ -61,13 +69,17 @@ const RESULTS = {
       "Cape Verde__Spain": { home: 0, away: 0 },
       "Saudi Arabia__Uruguay": { home: 1, away: 1 },
       "Saudi Arabia__Spain": { home: 4, away: 0 },
-      "Cape Verde__Uruguay": { home: 2, away: 2 }
+      "Cape Verde__Uruguay": { home: 2, away: 2 },
+      "Cape Verde__Saudi Arabia": { home: 0, away: 0 },
+      "Spain__Uruguay": { home: 0, away: 1 }
     },
     I: {
       "France__Senegal": { home: 3, away: 1 },
       "Iraq__Norway": { home: 1, away: 4 },
       "France__Iraq": { home: 3, away: 0 },
-      "Norway__Senegal": { home: 3, away: 2 }
+      "Norway__Senegal": { home: 3, away: 2 },
+      "France__Norway": { home: 1, away: 4 },
+      "Iraq__Senegal": { home: 5, away: 0 }
     },
     J: {
       "Algeria__Argentina": { home: 3, away: 0 },
