@@ -6,8 +6,12 @@ const RESULTS = {
     D: ["USA", "Australia", "Paraguay", "Turkey"],
     E: ["Germany", "Ivory Coast", "Ecuador", "Curaçao"],
     F: ["Netherlands", "Japan", "Sweden", "Tunisia"],
+    G: ["Belgium", "Egypt", "Iran", "New Zealand"],
     H: ["Spain", "Cape Verde", "Uruguay", "Saudi Arabia"],
-    I: ["France", "Norway", "Senegal", "Iraq"]
+    I: ["France", "Norway", "Senegal", "Iraq"],
+    J: ["Argentina", "Austria", "Algeria", "Jordan"],
+    K: ["Colombia", "Portugal", "DR Congo", "Uzbekistan"],
+    L: ["England", "Croatia", "Ghana", "Panama"]
   },
   thirdPlace: [],
   groupMatches: {
@@ -63,7 +67,9 @@ const RESULTS = {
       "Belgium__Egypt": { home: 1, away: 1 },
       "Iran__New Zealand": { home: 2, away: 2 },
       "Belgium__Iran": { home: 0, away: 0 },
-      "Egypt__New Zealand": { home: 1, away: 3 }
+      "Egypt__New Zealand": { home: 1, away: 3 },
+      "Egypt__Iran": { home: 1, away: 1 },
+      "Belgium__New Zealand": { home: 1, away: 5 }
     },
     H: {
       "Cape Verde__Spain": { home: 0, away: 0 },
@@ -85,19 +91,25 @@ const RESULTS = {
       "Algeria__Argentina": { home: 3, away: 0 },
       "Austria__Jordan": { home: 3, away: 1 },
       "Argentina__Austria": { home: 2, away: 0 },
-      "Algeria__Jordan": { home: 1, away: 2 }
+      "Algeria__Jordan": { home: 1, away: 2 },
+      "Algeria__Austria": { home: 3, away: 3 },
+      "Argentina__Jordan": { home: 1, away: 3 }
     },
     K: {
       "DR Congo__Portugal": { home: 1, away: 1 },
       "Colombia__Uzbekistan": { home: 1, away: 3 },
       "Portugal__Uzbekistan": { home: 5, away: 0 },
-      "Colombia__DR Congo": { home: 1, away: 0 }
+      "Colombia__DR Congo": { home: 1, away: 0 },
+      "Colombia__Portugal": { home: 0, away: 0 },
+      "DR Congo__Uzbekistan": { home: 3, away: 1 }
     },
     L: {
       "Croatia__England": { home: 4, away: 2 },
       "Ghana__Panama": { home: 1, away: 0 },
       "England__Ghana": { home: 0, away: 0 },
-      "Croatia__Panama": { home: 0, away: 1 }
+      "Croatia__Panama": { home: 0, away: 1 },
+      "England__Panama": { home: 0, away: 2 },
+      "Croatia__Ghana": { home: 2, away: 1 }
     }
   },
 
@@ -117,12 +129,12 @@ const RESULTS = {
 
     matches: {
       round32: [
-        // {
-        //   match: 73,
-        //   team1: "",
-        //   team2: "",
-        //   winner: ""
-        // }
+        {
+          match: 73,
+          team1: "South Africa",
+          team2: "Canada",
+          winner: "Canada"
+        }
       ],
 
       round16: [
