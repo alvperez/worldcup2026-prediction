@@ -3283,6 +3283,26 @@ function buildKnockoutReviewState(source) {
     setWinnerIfPossible(KO_TREE.thirdPlace[0], knockout.thirdPlace || knockout.thirdPlaceWinner || source.thirdPlaceWinner);
   }
 
+  // Propagate the recorded winners into the downstream bracket slots. The
+  // computeMatchTeams() above ran before any winner was known, so the rounds
+  // past the round of 32 (whose occupants are decided by winner_of references)
+  // were left unresolved. Re-resolving now fills, e.g., the round-of-16 slots
+  // from the round-of-32 winners — which is what the per-round "reached this
+  // stage" scoring keys off of. Explicit team assignments from the payload are
+  // then restored as the source of truth for the real bracket, which may
+  // differ from the computed group path.
+  computeMatchTeams();
+  ['round32', 'round16', 'quarterfinals', 'semifinals', 'thirdPlace', 'final'].forEach(roundName => {
+    (knockout.matches?.[roundName] || []).forEach(item => {
+      if (!item || item.match === undefined || item.match === null) return;
+      if (!item.team1 && !item.team2) return;
+      state.matchTeams[Number(item.match)] = {
+        team1: item.team1 || null,
+        team2: item.team2 || null
+      };
+    });
+  });
+
   const reviewState = JSON.parse(JSON.stringify(state));
 
   state.groups = oldState.groups;
