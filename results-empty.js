@@ -134,6 +134,18 @@ const RESULTS = {
           team1: "South Africa",
           team2: "Canada",
           winner: "Canada"
+        },
+        {
+          match: 74,
+          team1: "Germany",
+          team2: "Paraguay",
+          winner: "Paraguay"
+        },
+        {
+          match: 76,
+          team1: "Brazil",
+          team2: "Japan",
+          winner: "Brazil"
         }
       ],
 
