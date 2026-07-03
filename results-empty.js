@@ -152,6 +152,60 @@ const RESULTS = {
           team1: "Brazil",
           team2: "Japan",
           winner: "Brazil"
+        },
+        {
+          match: 77,
+          team1: "France",
+          team2: "Sweden",
+          winner: "France"
+        },
+        {
+          match: 78,
+          team1: "Ivory Coast",
+          team2: "Norway",
+          winner: "Norway"
+        },
+        {
+          match: 79,
+          team1: "Mexico",
+          team2: "Ecuador",
+          winner: "Mexico"
+        },
+        {
+          match: 80,
+          team1: "England",
+          team2: "DR Congo",
+          winner: "England"
+        },
+        {
+          match: 81,
+          team1: "USA",
+          team2: "Bosnia & Herzegovina",
+          winner: "USA"
+        },
+        {
+          match: 82,
+          team1: "Belgium",
+          team2: "Senegal",
+          winner: "Belgium"
+        },
+        {
+          match: 83,
+          team1: "Portugal",
+          team2: "Croatia",
+          winner: "Portugal"
+        },
+        {
+          match: 84,
+          team1: "Spain",
+          team2: "Austria",
+          winner: "Spain"
+        },
+        {
+          match: 85,
+          team1: "Switzerland",
+          team2: "Algeria",
+          winner: "Switzerland"
         }
       ],
 
