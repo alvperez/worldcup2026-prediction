@@ -206,6 +206,18 @@ const RESULTS = {
           team1: "Switzerland",
           team2: "Algeria",
           winner: "Switzerland"
+        },
+        {
+          match: 86,
+          team1: "Argentina",
+          team2: "Cape Verde",
+          winner: "Argentina"
+        },
+        {
+          match: 88,
+          team1: "Australia",
+          team2: "Egypt",
+          winner: "Egypt"
         }
       ],
 
