@@ -257,6 +257,12 @@ const RESULTS = {
           team1: "Portugal",
           team2: "Spain",
           winner: "Spain"
+        },
+        {
+          match: 94,
+          team1: "USA",
+          team2: "Belgium",
+          winner: "Belgium"
         }
       ],
 
