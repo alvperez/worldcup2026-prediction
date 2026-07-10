@@ -279,12 +279,18 @@ const RESULTS = {
       ],
 
       quarterfinals: [
-        // {
-        //   match: 97,
-        //   team1: "",
-        //   team2: "",
-        //   winner: ""
-        // }
+        {
+          match: 97,
+          team1: "Morocco",
+          team2: "France",
+          winner: "France"
+        },
+        {
+          match: 98,
+          team1: "Spain",
+          team2: "Belgium",
+          winner: "Spain"
+        }
       ],
 
       semifinals: [
