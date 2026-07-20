@@ -290,44 +290,62 @@ const RESULTS = {
           team1: "Spain",
           team2: "Belgium",
           winner: "Spain"
+        },
+        {
+          match: 99,
+          team1: "Norway",
+          team2: "England",
+          winner: "England"
+        },
+        {
+          match: 100,
+          team1: "Argentina",
+          team2: "Switzerland",
+          winner: "Argentina"
         }
       ],
 
       semifinals: [
-        // {
-        //   match: 101,
-        //   team1: "",
-        //   team2: "",
-        //   winner: ""
-        // }
+        {
+          match: 101,
+          team1: "France",
+          team2: "Spain",
+          winner: "Spain"
+        },
+        {
+          match: 102,
+          team1: "England",
+          team2: "Argentina",
+          winner: "Argentina"
+        }
       ],
 
       thirdPlace: [
-        // {
-        //   match: 103,
-        //   team1: "",
-        //   team2: "",
-        //   winner: ""
-        // }
+        {
+          match: 103,
+          team1: "France",
+          team2: "England",
+          winner: "England"
+        }
       ],
 
       final: [
-        // {
-        //   match: 104,
-        //   team1: "",
-        //   team2: "",
-        //   winner: ""
-        // }
+        {
+          match: 104,
+          team1: "Spain",
+          team2: "Argentina",
+          winner: "Spain"
+        }
       ]
     }
   },
 
-  semifinalists: [],
-  finalists: [],
+  semifinalists: ["France", "Spain", "England", "Argentina"],
+  finalists: ["Spain", "Argentina"],
 
-  champion: "",
-  runnerUp: "",
-  thirdPlaceWinner: "",
+  champion: "Spain",
+  runnerUp: "Argentina",
+  thirdPlaceWinner: "England",
 
   awards: {
     goldenBoot: [],
